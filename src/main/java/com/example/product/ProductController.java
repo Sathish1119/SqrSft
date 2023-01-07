@@ -15,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.example.product.utils.EComUtils;
 
+import model.PostalCode;
 import model.PostalResponse;
 import model.ProductDetailResponse;
 import model.ProductId;
@@ -23,6 +24,7 @@ import model.ProductId;
 public class ProductController {
 
 	List<Integer> lst = new ArrayList<>();
+	int postalCode = 0;
 
 	@Value("${productIdUrl}")
 	String productDetailUrl;
@@ -79,7 +81,7 @@ public class ProductController {
 		for (int i = 0; i < lst.size(); i++) {
 			response = restTemplate.getForEntity(productDetailUrl + lst.get(i), ProductDetailResponse.class);
 			postalResponse = restTemplate.getForEntity(
-					"http://15.206.157.204:8080/warehouse/distance?postal_code=465535", PostalResponse.class);
+					"http://15.206.157.204:8080/warehouse/distance?postal_code="+postalCode, PostalResponse.class);
 
 			distance = postalResponse.getBody().getDistance_in_kilometers();
 
@@ -99,7 +101,14 @@ public class ProductController {
 	@DeleteMapping("/cart")
 	public void deleteCartItems() {
 		lst = new ArrayList<>();
+		postalCode = 0;
 
+	}
+	
+	@PostMapping("/postal")
+	public void PostalCode(@RequestBody PostalCode postcode)
+	{
+		postalCode = postcode.getId();
 	}
 
 }
