@@ -1,7 +1,5 @@
 package com.example.product.utils;
 
-import java.util.List;
-
 public interface DBUtilities {
 	
 	public void addToCard(int pid);

@@ -25,13 +25,15 @@ import model.ProductId;
 @RestController
 public class ProductController {
 
-//	List<Integer> lst = new ArrayList<>();
 	int postalCode = 0;
 
 	DBUtilities dbutil = new ListAsDB();
-	
+
 	@Value("${productIdUrl}")
 	String productDetailUrl;
+
+	@Value("${postalUrl}")
+	String getPostalUrl;
 
 	@Autowired
 	EComUtils eComUtils;
@@ -43,7 +45,8 @@ public class ProductController {
 		List<String> cartItems = new ArrayList<>();
 
 		for (int i = 0; i < dbutil.getTotalRows(); i++) {
-			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i), ProductDetailResponse.class);
+			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i),
+					ProductDetailResponse.class);
 			cartItems.add(response.getBody().response.toString());
 		}
 
@@ -53,28 +56,24 @@ public class ProductController {
 
 	@PostMapping("/cart/item")
 	public ResponseEntity<String> addProduct(@RequestBody ProductId id) {
-		System.out.println(id.getId());
-
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<ProductDetailResponse> response = restTemplate.getForEntity(productDetailUrl + id.getId(),
 				ProductDetailResponse.class);
 
 		if (response.getBody().getStatus() != HttpStatus.OK.value()) {
-			System.out.println(response.getBody());
-
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.getBody().toString());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.getBody().getMessage());
 		} else {
 			dbutil.addToCard(id.getId());
 
 			return ResponseEntity.status(HttpStatus.OK)
-					.body("Product Added in cart successfully and size is" + dbutil.getTotalRows());
+					.body("Product Added in cart successfully and size is " + dbutil.getTotalRows());
 
 		}
 
 	}
 
 	@GetMapping("/cart/checkout-value")
-	public Float cartCheckoutValue(@RequestBody PostalCode postcode) {
+	public Object cartCheckoutValue(@RequestBody PostalCode postcode) {
 		postalCode = postcode.getPostal_code();
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<ProductDetailResponse> response = null;
@@ -84,11 +83,16 @@ public class ProductController {
 		float distance = 0;
 
 		for (int i = 0; i < dbutil.getTotalRows(); i++) {
-			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i), ProductDetailResponse.class);
-			
+			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i),
+					ProductDetailResponse.class);
+
 			// failure case for postal response to be added
-			postalResponse = restTemplate.getForEntity(
-					"http://15.206.157.204:8080/warehouse/distance?postal_code="+postalCode, PostalResponse.class);
+			postalResponse = restTemplate.getForEntity(getPostalUrl + postalCode, PostalResponse.class);
+
+			if (postalResponse.getBody().getStatus() != 200) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+						.body("Issue in Postal Service: " + postalResponse.getBody().getMessage());
+			}
 
 			distance = postalResponse.getBody().getDistance_in_kilometers();
 
@@ -99,9 +103,16 @@ public class ProductController {
 		}
 
 		if (finalPrice > 0)
+		{
+			
 			finalPrice += eComUtils.getDistWeightPrice(distance, totalWeight);
+		}
+		else
+		{
+			return ResponseEntity.status(HttpStatus.OK).body("Your Cart is empty ");
+		}
 
-		return finalPrice;
+		return ResponseEntity.status(HttpStatus.OK).body("Your Cart Item final price is: " + finalPrice);
 
 	}
 
@@ -110,12 +121,6 @@ public class ProductController {
 		dbutil.deleteCartItems();
 		postalCode = 0;
 
-	}
-	
-	@PostMapping("/postal")
-	public void PostalCode(@RequestBody PostalCode postcode)
-	{
-		postalCode = postcode.getPostal_code();
 	}
 
 }
