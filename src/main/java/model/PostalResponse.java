@@ -5,7 +5,7 @@ public class PostalResponse {
 	float distance_in_kilometers;
 	int status;
 	String message;
-	
+
 	public String getMessage() {
 		return message;
 	}

@@ -20,6 +20,5 @@ public class PostalCode {
 	public void setPostal_code(int postal_code) {
 		this.postal_code = postal_code;
 	}
-	
 
 }

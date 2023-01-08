@@ -86,7 +86,7 @@ public class ProductController {
 			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i),
 					ProductDetailResponse.class);
 
-			// failure case for postal response to be added
+			
 			postalResponse = restTemplate.getForEntity(getPostalUrl + postalCode, PostalResponse.class);
 
 			if (postalResponse.getBody().getStatus() != 200) {
@@ -102,13 +102,10 @@ public class ProductController {
 
 		}
 
-		if (finalPrice > 0)
-		{
-			
+		if (finalPrice > 0) {
+
 			finalPrice += eComUtils.getDistWeightPrice(distance, totalWeight);
-		}
-		else
-		{
+		} else {
 			return ResponseEntity.status(HttpStatus.OK).body("Your Cart is empty ");
 		}
 

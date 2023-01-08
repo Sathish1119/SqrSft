@@ -5,7 +5,7 @@ public class PostalErrResp {
 	String message;
 	String response;
 	int status;
-	
+
 	public PostalErrResp() {
 		// TODO Auto-generated constructor stub
 	}
@@ -34,5 +34,4 @@ public class PostalErrResp {
 		this.status = status;
 	}
 
-	
 }

@@ -3,8 +3,8 @@ package com.example.product.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListAsDB implements DBUtilities{
-	
+public class ListAsDB implements DBUtilities {
+
 	List<Integer> lst = new ArrayList<>();
 
 	public ListAsDB() {
@@ -14,7 +14,7 @@ public class ListAsDB implements DBUtilities{
 	@Override
 	public void addToCard(int pid) {
 		lst.add(pid);
-		
+
 	}
 
 	@Override
@@ -25,7 +25,7 @@ public class ListAsDB implements DBUtilities{
 	@Override
 	public void deleteCartItems() {
 		lst = new ArrayList<>();
-		
+
 	}
 
 	@Override
