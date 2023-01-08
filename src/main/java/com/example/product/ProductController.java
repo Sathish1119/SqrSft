@@ -13,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.product.utils.DBUtilities;
 import com.example.product.utils.EComUtils;
+import com.example.product.utils.ListAsDB;
 
 import model.PostalCode;
 import model.PostalResponse;
@@ -23,9 +25,11 @@ import model.ProductId;
 @RestController
 public class ProductController {
 
-	List<Integer> lst = new ArrayList<>();
+//	List<Integer> lst = new ArrayList<>();
 	int postalCode = 0;
 
+	DBUtilities dbutil = new ListAsDB();
+	
 	@Value("${productIdUrl}")
 	String productDetailUrl;
 
@@ -33,13 +37,13 @@ public class ProductController {
 	EComUtils eComUtils;
 
 	@GetMapping("/cart/items")
-	public List<Object> getProduct() {
+	public List<String> getProduct() {
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<ProductDetailResponse> response = null;
-		List<Object> cartItems = new ArrayList<>();
+		List<String> cartItems = new ArrayList<>();
 
-		for (int i = 0; i < lst.size(); i++) {
-			response = restTemplate.getForEntity(productDetailUrl + lst.get(i), ProductDetailResponse.class);
+		for (int i = 0; i < dbutil.getTotalRows(); i++) {
+			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i), ProductDetailResponse.class);
 			cartItems.add(response.getBody().response.toString());
 		}
 
@@ -60,17 +64,18 @@ public class ProductController {
 
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.getBody().toString());
 		} else {
-			lst.add(id.getId());
+			dbutil.addToCard(id.getId());
 
 			return ResponseEntity.status(HttpStatus.OK)
-					.body("Product Added in cart successfully and size is" + lst.size());
+					.body("Product Added in cart successfully and size is" + dbutil.getTotalRows());
 
 		}
 
 	}
 
 	@GetMapping("/cart/checkout-value")
-	public Float cartCheckoutValue() {
+	public Float cartCheckoutValue(@RequestBody PostalCode postcode) {
+		postalCode = postcode.getPostal_code();
 		RestTemplate restTemplate = new RestTemplate();
 		ResponseEntity<ProductDetailResponse> response = null;
 		ResponseEntity<PostalResponse> postalResponse = null;
@@ -78,8 +83,10 @@ public class ProductController {
 		float totalWeight = 0;
 		float distance = 0;
 
-		for (int i = 0; i < lst.size(); i++) {
-			response = restTemplate.getForEntity(productDetailUrl + lst.get(i), ProductDetailResponse.class);
+		for (int i = 0; i < dbutil.getTotalRows(); i++) {
+			response = restTemplate.getForEntity(productDetailUrl + dbutil.getCartItems(i), ProductDetailResponse.class);
+			
+			// failure case for postal response to be added
 			postalResponse = restTemplate.getForEntity(
 					"http://15.206.157.204:8080/warehouse/distance?postal_code="+postalCode, PostalResponse.class);
 
@@ -100,7 +107,7 @@ public class ProductController {
 
 	@DeleteMapping("/cart")
 	public void deleteCartItems() {
-		lst = new ArrayList<>();
+		dbutil.deleteCartItems();
 		postalCode = 0;
 
 	}
@@ -108,7 +115,7 @@ public class ProductController {
 	@PostMapping("/postal")
 	public void PostalCode(@RequestBody PostalCode postcode)
 	{
-		postalCode = postcode.getId();
+		postalCode = postcode.getPostal_code();
 	}
 
 }
